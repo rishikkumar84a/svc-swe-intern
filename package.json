@@ -1,0 +1,11 @@
+﻿{
+  "name": "svc-swe-intern",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "test:client": "cd client && npm ci && npm run test:coverage",
+    "test:server": "cd server && npm ci && npm run test:coverage",
+    "test": "npm run test:server && npm run test:client",
+    "test:ci": "npm run test -- --run --silent"
+  }
+}
