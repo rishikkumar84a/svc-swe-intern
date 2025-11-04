@@ -28,19 +28,26 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Install root & workspace deps
+      - name: Install root & workspace deps (skip optional native modules)
+        env:
+          # make npm skip optional dependencies (double-safe)
+          NPM_CONFIG_OPTIONAL: 'false'
         run: |
+          set -e
+          echo "NPM optional modules disabled for CI (NPM_CONFIG_OPTIONAL=$NPM_CONFIG_OPTIONAL)"
           if [ -f package-lock.json ]; then
-            echo "Installing root deps"
-            npm ci
+            echo "Installing root deps (omit optional)"
+            npm ci --omit=optional
           fi
 
           if [ -f server/package-lock.json ]; then
-            npm ci --prefix server
+            echo "Installing server deps (omit optional)"
+            npm ci --prefix server --omit=optional
           fi
 
           if [ -f client/package-lock.json ]; then
-            npm ci --prefix client
+            echo "Installing client deps (omit optional)"
+            npm ci --prefix client --omit=optional
           fi
 
       - name: Wait for Postgres
