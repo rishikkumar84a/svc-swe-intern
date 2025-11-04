@@ -28,8 +28,20 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Install root deps
-        run: npm ci
+      - name: Install root & workspace deps
+        run: |
+          if [ -f package-lock.json ]; then
+            echo "Installing root deps"
+            npm ci
+          fi
+
+          if [ -f server/package-lock.json ]; then
+            npm ci --prefix server
+          fi
+
+          if [ -f client/package-lock.json ]; then
+            npm ci --prefix client
+          fi
 
       - name: Wait for Postgres
         run: |
