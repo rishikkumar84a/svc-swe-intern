@@ -12,7 +12,7 @@ jobs:
     env:
       NODE_ENV: test
       # Avoid optional native binaries that cause platform-specific failures in CI
-      NPM_CONFIG_OPTIONAL: "false"
+      NPM_CONFIG_OPTIONAL: "true"
       # Set DB url for tests (adjust if your tests require different creds)
       DATABASE_URL: postgres://test:test@localhost:5432/app_test
       # Disable npm fund/audit logs noise in CI installs
