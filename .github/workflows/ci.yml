@@ -7,6 +7,18 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    # Force npm to omit optional dependencies (prevents Rollup trying to load native binaries)
+    env:
+      NODE_ENV: test
+      # Avoid optional native binaries that cause platform-specific failures in CI
+      NPM_CONFIG_OPTIONAL: "false"
+      # Set DB url for tests (adjust if your tests require different creds)
+      DATABASE_URL: postgres://test:test@localhost:5432/app_test
+      # Disable npm fund/audit logs noise in CI installs
+      NPM_CONFIG_AUDIT: "false"
+      NPM_CONFIG_FUND: "false"
+
     services:
       postgres:
         image: postgres:16
@@ -28,26 +40,26 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Install root & workspace deps (skip optional native modules)
-        env:
-          # make npm skip optional dependencies (double-safe)
-          NPM_CONFIG_OPTIONAL: 'false'
+      - name: Verify node & npm
         run: |
-          set -e
-          echo "NPM optional modules disabled for CI (NPM_CONFIG_OPTIONAL=$NPM_CONFIG_OPTIONAL)"
-          if [ -f package-lock.json ]; then
-            echo "Installing root deps (omit optional)"
-            npm ci --omit=optional
-          fi
+          node -v
+          npm -v
 
+      - name: Install root dependencies (create root lockfile state)
+        run: |
+          # Use CI-friendly install and explicitly omit optional (prevents native-rollup issues)
+          npm ci --no-audit --no-fund --omit=optional
+
+      - name: Install server dependencies
+        run: |
           if [ -f server/package-lock.json ]; then
-            echo "Installing server deps (omit optional)"
-            npm ci --prefix server --omit=optional
+            npm ci --prefix server --no-audit --no-fund --omit=optional
           fi
 
+      - name: Install client dependencies
+        run: |
           if [ -f client/package-lock.json ]; then
-            echo "Installing client deps (omit optional)"
-            npm ci --prefix client --omit=optional
+            npm ci --prefix client --no-audit --no-fund --omit=optional
           fi
 
       - name: Wait for Postgres
@@ -60,7 +72,7 @@ jobs:
 
       - name: Run tests
         env:
-          DATABASE_URL: postgres://test:test@localhost:5432/app_test
+          DATABASE_URL: ${{ env.DATABASE_URL }}
           NODE_ENV: test
         run: npm run test:ci
 
